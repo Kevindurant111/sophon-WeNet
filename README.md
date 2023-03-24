@@ -150,7 +150,7 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 
 ## 8. FAQ  
 1. ImportError: xxxx/libstdc++.so.6: version `GLIBCXX_3.4.30' not found: 常出现在pcie模式下，原因是编译好的ctc decoder与本机的环境不适配。  
-解决方法：在要运行的本机上重新编译一份ctc decoder。
+解决方法：在要运行的主机上重新编译一份ctc decoder。
 ```bash
 git clone https://github.com/Slyne/ctc_decoder.git  
 apt-get update
