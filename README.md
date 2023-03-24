@@ -17,7 +17,7 @@
 * [8. FAQ](#8-faq)
 
 ## 1. 简介
-WeNet是一款面向工业落地应用的语音识别工具包，提供了从语音识别模型的训练到部署的一条龙服务。本例程对[WeNet官方开源仓库](https://github.com/wenet-e2e/wenet)中基于aishell的预训练模型和算法进行移植，使之能在SOPHON BM1684和BM1684X上进行推理测试。
+WeNet是一款面向工业落地应用的语音识别工具包，提供了从语音识别模型的训练到部署的一条龙服务。本例程对[WeNet官方开源仓库](https://github.com/wenet-e2e/wenet)中基于aishell的预训练模型和算法进行移植，使之能在SOPHON BM1684和BM1684X上进行推理测试。后处理用到的ctc decoder代码来自[Ctc Decoder](https://github.com/Slyne/ctc_decoder)。
 
 ## 2. 特性
 * 支持BM1684X(x86 PCIe、SoC)和BM1684(x86 PCIe、SoC、arm PCIe)
