@@ -104,13 +104,13 @@ cat online_wer | grep "Overall"
 在coco2017val数据集上，精度测试结果如下：
 |   测试平台    |    测试程序   |              测试模型     | WER    |
 | ------------ | ------------ | ------------------------- | ------ |
-| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel | xxxxx  |
-| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel | 3.75%  |
-| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel | xxxxx  | 
-| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel | 3.82%  | 
+| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  |
+| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  |
+| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  | 
+| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  | 
 
 > **测试说明**：  
-1. wer指标会出现不超过1%范围内的波动，建议多次测试取平均值
+1. wer在不同的测试平台上是相同的。
 
 ## 7. 性能测试
 ### 7.1 bmrt_test
@@ -139,7 +139,7 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 | ----------- | ---------------- | ----------------------------------- | ------------- | --------- | ----------------- |
 | BM1684 PCIe | wenet.py         | wenet_encoder_fp32.bmodel           | xxxx          | xxxx      | xxxx              |
 | BM1684 SoC  | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 47.12     | 10.00             |
-| BM1684X PCIe| wenet.py         | wenet_encoder_fp32.bmodel           | xxxx          | xxxx      | xxxx              |
+| BM1684X PCIe| wenet.py         | wenet_encoder_fp32.bmodel           | 0.0002        | 27.61     | 3.25              |
 | BM1684X SoC | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 27.42     | 10.24             |
 
 
@@ -148,4 +148,13 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 2. 性能测试结果具有一定的波动性，建议多次测试取平均值；
 3. BM1684/1684X SoC的主控CPU均为8核 ARM A53 42320 DMIPS @2.3GHz，PCIe上的性能由于CPU的不同可能存在较大差异；
 
-## 8. FAQ
+## 8. FAQ  
+1. ImportError: xxxx/libstdc++.so.6: version `GLIBCXX_3.4.30' not found: 常出现在pcie模式下，原因是编译好的ctc decoder与本机的环境不适配。  
+解决方法：在要运行的本机上重新编译一份ctc decoder。
+```bash
+git clone https://github.com/Slyne/ctc_decoder.git  
+apt-get update
+apt-get install swig
+apt-get install python3-dev 
+cd ctc_decoder/swig && bash setup.sh
+```
