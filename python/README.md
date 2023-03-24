@@ -17,8 +17,8 @@
 
 此外您可能还需要安装其他第三方库：
 ```bash
-pip3 install torch
-pip3 install torchaudio
+pip3 install torch==1.13.1
+pip3 install torchaudio==0.13.1
 ```
 
 ### 1.2 SoC平台
