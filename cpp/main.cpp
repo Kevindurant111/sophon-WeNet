@@ -4,13 +4,83 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <thread>
 #include "processor.h"
 #include "bmruntime_cpp.h"
 #include "wrapper.h"
+// #include "ctc_beam_search_decoder.h"
 
 using namespace bmruntime;
 
+std::vector<std::string> read_dict(const std::string& dict_file) {
+    std::ifstream infile(dict_file); // Replace "input.txt" with the filename of your input file.
+    std::string line;
+    std::vector<std::string> vocabulary;
+    while (std::getline(infile, line)) { // Read each line of the file.
+        std::istringstream iss(line);
+        std::vector<std::string> words;
+        std::string word;
+        while (iss >> word) { // Split the line into words based on spaces.
+            words.push_back(word);
+        }
+        vocabulary.push_back(words[0]);
+    }
+    return vocabulary;
+}
+
+std::vector<std::string> ctc_decoding(void* log_probs, void* log_probs_idx, void* chunk_out_lens, int beam_size, int batch_size, const std::vector<std::string> &vocabulary, const std::string& mode) {
+    int num_cores = std::thread::hardware_concurrency();
+    int num_processes = std::min(num_cores, batch_size);
+    std::vector<std::string> hyps;
+
+    // Parsing the output
+    std::vector<std::vector<std::vector<int>>> log_probs_idx_vector;
+    std::vector<int> chunk_out_lens_vector(batch_size);
+    float* log_probs_ptr = static_cast<float*>(log_probs);
+    int *log_probs_idx_ptr = static_cast<int*>(log_probs_idx);
+    int *chunk_out_lens_ptr = static_cast<int*>(chunk_out_lens);
+    for(int i = 0; i < batch_size; i++) {
+        chunk_out_lens_vector[i] = chunk_out_lens_ptr[i];
+    }
+    
+    int cur_pos = 0;
+    for(int i = 0; i < batch_size; i++) {
+        int out_feat_length = chunk_out_lens_vector[i];
+        log_probs_idx_vector.push_back(std::vector<std::vector<int>>(out_feat_length, std::vector<int>(beam_size, 0)));
+        for(int j = 0; j < out_feat_length; j++) {   
+            for(int k = 0; k < beam_size; k++) {
+                log_probs_idx_vector[i][j][k] = log_probs_idx_ptr[cur_pos];
+                cur_pos++;
+            }
+        }
+    }
+
+    // decoding
+    if(mode == "ctc_greedy_search") {
+        std::vector<std::vector<int>> batch_sents;
+        for(int i = 0; i < batch_size; i++) {
+            std::vector<int> tmp;
+            for(int j = 0; j < chunk_out_lens_vector[i]; j++) {
+                tmp.push_back(log_probs_idx_vector[i][j][0]);
+            }
+            batch_sents.push_back(tmp);
+        }
+        hyps = map_batch(batch_sents, vocabulary, num_processes, true, 0);
+    }
+    else {
+        
+    }
+    return hyps;
+}
+
 int main(int argc, char** argv) {
+    std::string dict_file = "/data/WeNet/config/lang_char.txt";
+    std::vector<std::string> dict = read_dict(dict_file);
+
     std::string model = "/data/WeNet/models/BM1684/wenet_encoder_fp32.bmodel";
     int sample_frequency = 16000;
     int num_mel_bins = 80;
@@ -83,6 +153,10 @@ int main(int argc, char** argv) {
     // Initialize the memory space required for the input and output tensors
     auto &inputs = wenet.Inputs();
     auto &outputs = wenet.Outputs();
+    const bm_tensor_t * log_probs_bm_tensor_t = outputs[0]->tensor();
+    int batch_size = log_probs_bm_tensor_t->shape.dims[0];
+    int beam_size = log_probs_bm_tensor_t->shape.dims[2];
+
     void* att_cache = calloc(inputs[1]->num_elements(), sizeof(float));
     void* cnn_cache = calloc(inputs[2]->num_elements(), sizeof(float));
     void* cache_mask = calloc(inputs[4]->num_elements(), sizeof(float));
@@ -142,11 +216,14 @@ int main(int argc, char** argv) {
         outputs[5]->CopyTo(att_cache);
         outputs[6]->CopyTo(cnn_cache);
         outputs[7]->CopyTo(cache_mask);
-        float *data = static_cast<float*>(chunk_out);
-        for(int i = 0; i < 80; i++){
-              std::cout << data[i] << ' ';
-        }
-        std::cout << std::endl;
+        // float *data = static_cast<float*>(cnn_cache);
+        // std::cout << "cnn_cache" << std::endl;
+        // for(int i = 0; i < 12*256*7; i++){
+        //       std::cout << data[i] << ' ';
+        // }
+        // std::cout << std::endl;
+
+        std::vector<std::string> hyps = ctc_decoding(log_probs, log_probs_idx, chunk_out_lens, beam_size, batch_size, dict, "ctc_greedy_search");
 
         std::free(chunk_lens_ptr);
         std::free(chunk_xs_ptr);
