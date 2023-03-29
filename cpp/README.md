@@ -1,2 +1,6 @@
-wget https://versaweb.dl.sourceforge.net/project/arma/armadillo-12.0.1.tar.xz
+```bash
+# install armadillo
 sudo apt-get install -y liblapack-dev libblas-dev libopenblas-dev libarmadillo-dev libsndfile1-dev
+# install ctcdecode and follow the readme in ctcdecode-cpp
+git clone https://github.com/Kevindurant111/ctcdecode-cpp.git
+```
