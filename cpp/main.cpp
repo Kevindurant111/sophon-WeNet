@@ -12,7 +12,7 @@
 #include "processor.h"
 #include "bmruntime_cpp.h"
 #include "wrapper.h"
-// #include "ctc_beam_search_decoder.h"
+#include "ctcdecode.h"
 
 using namespace bmruntime;
 
@@ -34,7 +34,7 @@ std::vector<std::string> read_dict(const std::string& dict_file) {
 
 std::vector<std::string> ctc_decoding(void* log_probs, void* log_probs_idx, void* chunk_out_lens, int beam_size, int batch_size, const std::vector<std::string> &vocabulary, const std::string& mode) {
     int num_cores = std::thread::hardware_concurrency();
-    int num_processes = std::min(num_cores, batch_size);
+    size_t num_processes = std::min(num_cores, batch_size);
     std::vector<std::string> hyps;
 
     // Parsing the output
@@ -224,6 +224,7 @@ int main(int argc, char** argv) {
         // std::cout << std::endl;
 
         std::vector<std::string> hyps = ctc_decoding(log_probs, log_probs_idx, chunk_out_lens, beam_size, batch_size, dict, "ctc_greedy_search");
+        std::cout << hyps[0] << std::endl;
 
         std::free(chunk_lens_ptr);
         std::free(chunk_xs_ptr);
