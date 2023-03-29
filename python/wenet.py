@@ -233,6 +233,7 @@ if __name__ == '__main__':
             beam_log_probs_idx = []
             
             num_frames = feats.shape[1]
+            result = ""
             for cur in range(0, num_frames - context + 1, stride):
                 end = min(cur + decoding_window, num_frames)
                 chunk_xs = feats[:, cur:end, :]
@@ -264,18 +265,15 @@ if __name__ == '__main__':
                 chunk_hyps, _ = ctc_decoding(chunk_log_probs, chunk_log_probs_idx, chunk_out_lens, vocabulary)
                 postprocess_time += time.time() - start_time
                 print(chunk_hyps)
+                result += chunk_hyps[0]
            
             encoder_out = np.concatenate(encoder_out, axis=1)
             encoder_out_lens = np.full(args.batch_size, fill_value=encoder_out.shape[1], dtype=np.int32)
             beam_log_probs = np.concatenate(beam_log_probs, axis=1)
             beam_log_probs_idx = np.concatenate(beam_log_probs_idx, axis=1)
-
-            start_time = time.time()
-            hyps, score_hyps = ctc_decoding(beam_log_probs, beam_log_probs_idx, encoder_out_lens, vocabulary, args.mode)
-            postprocess_time += time.time() - start_time
             
             for i, key in enumerate(keys):
-                content = hyps[i]
+                content = result
                 logging.info('{} {}'.format(key, content))
                 fout.write('{} {}\n'.format(key, content))
                 

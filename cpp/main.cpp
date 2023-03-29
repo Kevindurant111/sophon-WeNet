@@ -29,6 +29,15 @@ int main(int argc, char** argv) {
     int subsampling_rate = 4;
     int context = 7;
 
+    std::string result_file = "/data/work/sophon-WeNet/cpp/result.txt";
+    // Check if file exists
+    std::FILE* file_exists = std::fopen(result_file.c_str(), "r");
+    if (file_exists) {
+        // File exists, delete it
+        std::fclose(file_exists);
+        std::remove(result_file.c_str());
+    }
+
     // load model
     Context ctx;
     bm_status_t status = ctx.load_bmodel(model.c_str());
@@ -165,6 +174,17 @@ int main(int argc, char** argv) {
         std::free(chunk_out_lens);
 
         std::cout << "Key: " << pair.first << " , Result: " << result << std::endl;
+
+        // Open file for writing
+        std::ofstream result_file_stream(result_file, std::ios::app);
+
+        if (!result_file_stream.is_open()) {
+            // Failed to open file, handle error
+            std::cerr << "Failed to open file " << result_file << " for writing." << std::endl;
+            return 1;
+        }
+        result_file_stream << pair.first + " " + result + "\n";
+        result_file_stream.close();
     }
 
     return 0;

@@ -104,10 +104,10 @@ cat online_wer | grep "Overall"
 在coco2017val数据集上，精度测试结果如下：
 |   测试平台    |    测试程序   |              测试模型     | WER    |
 | ------------ | ------------ | ------------------------- | ------ |
-| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  |
-| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  |
-| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  | 
-| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel | 2.62%  | 
+| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  |
+| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  |
+| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  | 
+| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  | 
 
 > **测试说明**：  
 1. wer在不同的测试平台上是相同的。
@@ -138,9 +138,9 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 |    测试平台  |     测试程序      |             测试模型                |preprocess_time|inference_time|postprocess_time| 
 | ----------- | ---------------- | ----------------------------------- | ------------- | --------- | ----------------- |
 | BM1684 PCIe | wenet.py         | wenet_encoder_fp32.bmodel           | xxxx          | xxxx      | xxxx              |
-| BM1684 SoC  | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 47.12     | 10.00             |
+| BM1684 SoC  | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 47.12     | 8.56              |
 | BM1684X PCIe| wenet.py         | wenet_encoder_fp32.bmodel           | 0.0002        | 27.61     | 3.25              |
-| BM1684X SoC | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 27.42     | 10.24             |
+| BM1684X SoC | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 27.42     | 8.72              |
 
 
 > **测试说明**：  
