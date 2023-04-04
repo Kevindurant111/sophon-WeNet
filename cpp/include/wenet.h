@@ -35,6 +35,7 @@ class WeNet {
     int inference();
 
     public:
+    
     WeNet(std::shared_ptr<bmruntime::Context> ctx): ctx(ctx) {};
     int Init(const std::vector<std::string>& dict, int sample_frequency, int num_mel_bins, int frame_shift, int frame_length, int decoding_chunk_size, int subsampling_rate, int context);
     std::string Recognize(const char* file_path);

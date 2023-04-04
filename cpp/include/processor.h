@@ -53,7 +53,8 @@ arma::fmat get_window(arma::fmat& input,
     bool raw_energy = true, 
     double dither = 0.0,
     bool remove_dc_offset = true,
-    double preemphasis_coefficient = 0.97
+    double preemphasis_coefficient = 0.97,
+    bool use_signal_log_energy = false
 );
 
 arma::fmat inverse_mel_scale(const arma::fmat& mel_freq);
@@ -80,5 +81,6 @@ arma::fmat fbank(arma::fmat input,
     double dither = 0.0, 
     double energy_floor = 1.0,
     bool use_power = true,
-    bool use_log_fbank = true
+    bool use_log_fbank = true, 
+    bool use_signal_log_energy = false
 );

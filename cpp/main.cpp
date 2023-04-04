@@ -14,6 +14,7 @@
 using namespace bmruntime;
 
 int main(int argc, char** argv) {
+    auto start_time = std::chrono::high_resolution_clock::now();
     std::string data_lists_file = "/data/work/sophon-WeNet/datasets/aishell_S0764/aishell_S0764.list";
     auto data_map = read_data_lists(data_lists_file);
     std::string dict_file = "/data/WeNet/config/lang_char.txt";
@@ -73,6 +74,9 @@ int main(int argc, char** argv) {
     wenet_ts.build_timeline("wenet test");
     wenet_ts.show_summary("wenet test");
     wenet_ts.clear();
-
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "程序运行时间为 " << duration.count() << " 毫秒" << std::endl;
+    
     return 0;
 }

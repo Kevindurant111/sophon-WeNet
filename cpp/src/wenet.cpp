@@ -31,6 +31,7 @@ int WeNet::Init(const std::vector<std::string>& dict, int sample_frequency, int 
 }
 
 int WeNet::pre_process(const char* file_path) {
+    LOG_TS(m_ts, "wenet load file");
     SF_INFO sfinfo;
     SNDFILE* sndfile = sf_open(file_path, SFM_READ, &sfinfo);
 
@@ -69,9 +70,12 @@ int WeNet::pre_process(const char* file_path) {
         std::cerr << "The number of channels in the wav file is not normal!" << std::endl;
         return 1;
     }
+    LOG_TS(m_ts, "wenet load file");
 
-    feats = fbank(waveform, num_mel_bins, frame_length, frame_shift, sample_frequency, 0.0, 0.0, true, true);
+    LOG_TS(m_ts, "wenet fbank");
+    feats = fbank(waveform, num_mel_bins, frame_length, frame_shift, sample_frequency, 0.0, 0.0, true, true, false);
     // todo:spec_sub
+    LOG_TS(m_ts, "wenet fbank");
 
     return 0;
 }
