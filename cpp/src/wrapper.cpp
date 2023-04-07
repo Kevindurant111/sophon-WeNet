@@ -1,4 +1,8 @@
 #include "wrapper.h"
+#include "bmruntime_cpp.h"
+#include "bmcv_api.h"
+
+using namespace bmruntime;
 
 arma::fmat as_strided(const arma::fmat& X, int n_rows, int n_cols, int row_stride, int col_stride) {
     arma::fmat result(n_rows, n_cols);
@@ -62,6 +66,12 @@ void* fmat_to_sys_mem(const arma::fmat& X) {
     return ptr;
 }
 
+void* frowvec_to_sys_mem(const arma::frowvec& X) {
+    void* void_ptr = std::malloc(X.n_elem * sizeof(float));
+    std::memcpy(void_ptr, X.memptr(), X.n_elem * sizeof(float));
+    return void_ptr;
+}
+
 arma::fmat matmul(const arma::fmat& A, const arma::fmat& B) {
     assert(A.n_cols == B.n_rows && "Matrix multiplication: dimensional mismatch!");
     arma::fmat result(A.n_rows, B.n_cols, arma::fill::zeros);
@@ -72,5 +82,82 @@ arma::fmat matmul(const arma::fmat& A, const arma::fmat& B) {
             }
         }
     }
+    return result;
+}
+
+
+arma::fmat bm_fft(const arma::fmat& A) {
+    int n_rows = A.n_rows;
+    int n_cols = A.n_cols;
+
+    // void* input_real = fmat_to_sys_mem(A);
+    // void *out_real_host = std::malloc(n_rows * n_cols * sizeof(float));
+    // void *out_imaginary_host = std::malloc(n_rows * n_cols * sizeof(float));
+
+    // bm_handle_t handle = nullptr;
+    // bm_dev_request(&handle, 0);
+
+    // bm_device_mem_t input_real_device, out_real_device, out_imaginary_device;
+    // bm_malloc_device_byte(handle, &input_real_device, n_rows * n_cols * sizeof(float));
+    // bm_malloc_device_byte(handle, &out_real_device, n_rows * n_cols * sizeof(float));
+    // bm_malloc_device_byte(handle, &out_imaginary_device, n_rows * n_cols * sizeof(float));
+    // bm_memcpy_s2d(handle, input_real_device, input_real);
+
+    // void *plan = nullptr;
+    // bmcv_fft_2d_create_plan(handle, n_rows, n_cols, true, plan);
+    // bmcv_fft_execute_real_input(handle, input_real_device, out_real_device, out_imaginary_device, plan);
+
+    // bmcv_fft_destroy_plan(handle, plan);
+    // bm_memcpy_d2s(handle, out_real_host, out_real_device);
+    // bm_memcpy_d2s(handle, out_imaginary_host, out_imaginary_device);
+    // bm_free_device(handle, input_real_device);
+    // bm_free_device(handle, out_real_device);
+    // bm_free_device(handle, out_imaginary_device);
+    // bm_dev_free(handle);
+
+    // float* out_real_host_f = static_cast<float*>(out_real_host);
+    // arma::fmat out_real_mat(out_real_host_f, n_rows, n_cols);
+    // out_real_mat.print("out_real");
+    // std::free(input_real);
+    // std::free(out_real_host);
+    // std::free(out_imaginary_host);
+    arma::fmat result(n_rows, floor(n_cols / 2) + 1);
+    void *out_real_host = std::malloc(n_cols * sizeof(float));
+    void *out_imaginary_host = std::malloc(n_cols * sizeof(float));
+
+    bm_handle_t handle = nullptr;
+    bm_dev_request(&handle, 0);
+
+    bm_device_mem_t input_real_device, out_real_device, out_imaginary_device;
+    bm_malloc_device_byte(handle, &input_real_device, n_cols * sizeof(float));
+    bm_malloc_device_byte(handle, &out_real_device, n_cols * sizeof(float));
+    bm_malloc_device_byte(handle, &out_imaginary_device, n_cols * sizeof(float));
+
+    void *plan = nullptr;
+    bmcv_fft_1d_create_plan(handle, 1, n_cols, true, plan);
+    for(int i = 0; i < n_rows; i++) {
+        void* input_real = frowvec_to_sys_mem(A.row(i));
+
+        bm_memcpy_s2d(handle, input_real_device, input_real);
+        bmcv_fft_execute_real_input(handle, input_real_device, out_real_device, out_imaginary_device, plan);
+        bm_memcpy_d2s(handle, out_real_host, out_real_device);
+        bm_memcpy_d2s(handle, out_imaginary_host, out_imaginary_device);
+
+        float* out_real_host_f = static_cast<float*>(out_real_host);
+        arma::frowvec out_real_frowvec(out_real_host_f, floor(n_cols / 2) + 1);
+        float* out_imaginary_host_f = static_cast<float*>(out_imaginary_host);
+        arma::frowvec out_imaginary_frowvec(out_imaginary_host_f, floor(n_cols / 2) + 1);
+        result.row(i) = arma::pow(arma::pow(out_real_frowvec, 2.0) + arma::pow(out_imaginary_frowvec, 2.0), 0.5);
+
+        std::free(input_real);
+    }
+    std::free(out_real_host);
+    std::free(out_imaginary_host);
+    bmcv_fft_destroy_plan(handle, plan);
+    bm_free_device(handle, input_real_device);
+    bm_free_device(handle, out_real_device);
+    bm_free_device(handle, out_imaginary_device);
+    bm_dev_free(handle);
+
     return result;
 }

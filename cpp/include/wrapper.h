@@ -21,5 +21,11 @@ arma::fmat arange(int size);
 // Convert fmat to the contents pointed to by void*, noting that mat is stored by column
 void* fmat_to_sys_mem(const arma::fmat& X);
 
+// Convert frowvec to the contents pointed to by void*, noting that mat is stored by column
+void* frowvec_to_sys_mem(const arma::frowvec& X);
+
 // Matrix multiplication, no bugs :)
 arma::fmat matmul(const arma::fmat& A, const arma::fmat& B);
+
+// real fft based on bmcv
+arma::fmat bm_fft(const arma::fmat& A);
