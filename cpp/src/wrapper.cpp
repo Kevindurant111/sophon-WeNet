@@ -90,6 +90,7 @@ arma::fmat bm_fft(const arma::fmat& A) {
     int n_rows = A.n_rows;
     int n_cols = A.n_cols;
 
+    /* plan A: There is an error. 2D FFT only supports input sizes that are a power of N where N is 2, 3, 4, or 5. */
     // void* input_real = fmat_to_sys_mem(A);
     // void *out_real_host = std::malloc(n_rows * n_cols * sizeof(float));
     // void *out_imaginary_host = std::malloc(n_rows * n_cols * sizeof(float));
@@ -121,6 +122,7 @@ arma::fmat bm_fft(const arma::fmat& A) {
     // std::free(input_real);
     // std::free(out_real_host);
     // std::free(out_imaginary_host);
+    
     arma::fmat result(n_rows, floor(n_cols / 2) + 1);
     void *out_real_host = std::malloc(n_cols * sizeof(float));
     void *out_imaginary_host = std::malloc(n_cols * sizeof(float));
