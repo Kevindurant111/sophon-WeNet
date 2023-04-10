@@ -17,12 +17,12 @@
 * [8. FAQ](#8-faq)
 
 ## 1. 简介
-WeNet是一款面向工业落地应用的语音识别工具包，提供了从语音识别模型的训练到部署的一条龙服务。本例程对[WeNet官方开源仓库](https://github.com/wenet-e2e/wenet)中基于aishell的预训练模型和算法进行移植，使之能在SOPHON BM1684和BM1684X上进行推理测试。后处理用到的ctc decoder代码来自[Ctc Decoder](https://github.com/Slyne/ctc_decoder)。
+WeNet是一款面向工业落地应用的语音识别工具包，提供了从语音识别模型的训练到部署的一条龙服务。本例程对[WeNet官方开源仓库](https://github.com/wenet-e2e/wenet)中基于aishell的预训练模型和算法进行移植，使之能在SOPHON BM1684和BM1684X上进行推理测试。后处理用到的ctc decoder代码来自[Ctc Decoder](https://github.com/Kevindurant111/ctcdecode-cpp.git)。
 
 ## 2. 特性
 * 支持BM1684X(x86 PCIe、SoC)和BM1684(x86 PCIe、SoC、arm PCIe)
 * 支持FP32模型编译和推理
-* 支持基于torchaudio的Python推理
+* 支持基于torchaudio的Python推理和基于Armadillo的C++推理
 * 支持单batch模型推理
 * 支持流式语音的测试
 
@@ -44,11 +44,14 @@ chmod -R +x scripts/
 ```
 ./models
 ├── BM1684
-│   └── wenet_encoder_fp32.bmodel             # 使用TPU-NNTC编译，用于BM1684的FP32 BModel，batch_size=1
+│   ├── wenet_encoder_fp32.bmodel             # 使用TPU-NNTC编译，用于BM1684的FP32 Enocder BModel，batch_size=1
+│   └── wenet_decoder_fp32.bmodel             # 使用TPU-NNTC编译，用于BM1684的FP32 Decoder BModel，batch_size=1
 ├── BM1684X
-│   └── wenet_encoder_fp32.bmodel             # 使用TPU-NNTC编译，用于BM1684X的FP32 BModel，batch_size=1
+│   ├── wenet_encoder_fp32.bmodel             # 使用TPU-NNTC编译，用于BM1684X的FP32 Enocder BModel，batch_size=1
+│   └── wenet_decoder_fp32.bmodel             # 使用TPU-NNTC编译，用于BM1684X的FP32 Decoder BModel，batch_size=1
 └── onnx
-    └── wenet_encoder.onnx                    # 导出的onnx模型       
+    ├── wenet_encoder.onnx                    # 导出的encoder onnx模型
+    └── wenet_decoder.onnx                    # 导出的decoder onnx模型       
 ```
 
 下载的数据包括：
@@ -85,9 +88,10 @@ chmod -R +x scripts/
 ./scripts/gen_fp32bmodel_nntc.sh BM1684
 ```
 
-​执行上述命令会在`models/BM1684/`下生成`wenet_encoder_fp32.bmodel`文件，即转换好的FP32 BModel。
+​执行上述命令会在`models/BM1684/`下生成`wenet_encoder_fp32.bmodel`和`wenet_decoder_fp32.bmodel`文件，即转换好的FP32 BModel。
 
 ## 5. 例程测试
+- [C++例程](./cpp/README.md)
 - [Python例程](./python/README.md)
 
 ## 6. 精度测试
@@ -102,15 +106,27 @@ cat online_wer | grep "Overall"
 
 ### 6.2 测试结果
 在coco2017val数据集上，精度测试结果如下：
-|   测试平台    |    测试程序   |              测试模型     | WER    |
-| ------------ | ------------ | ------------------------- | ------ |
-| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  |
-| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  |
-| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  | 
-| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel | 2.70%  | 
+|   测试平台    |    测试程序   |              测试模型                                 | WER    |
+| ------------ | ------------ | ----------------------------------------------------- | ------ |
+| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel                             | 2.70%  |
+| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel                             | 2.70%  |
+| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel                             | 2.70%  | 
+| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel                             | 2.70%  |
+| BM1684 PCIe  | wenet.pcie   | wenet_encoder_fp32.bmodel                             | 2.70%  |
+| BM1684 SoC   | wenet.soc    | wenet_encoder_fp32.bmodel                             | 2.70%  |
+| BM1684X PCIe | wenet.pcie   | wenet_encoder_fp32.bmodel                             | 2.70%  | 
+| BM1684X SoC  | wenet.soc    | wenet_encoder_fp32.bmodel                             | 2.70%  |
+| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
+| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
+| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  | 
+| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
+| BM1684 PCIe  | wenet.pcie   | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
+| BM1684 SoC   | wenet.soc    | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
+| BM1684X PCIe | wenet.pcie   | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  | 
+| BM1684X SoC  | wenet.soc    | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |    
 
 > **测试说明**：  
-1. wer在不同的测试平台上是相同的。
+1. 在使用的模型相同的情况下，wer在不同的测试平台上是相同的。
 
 ## 7. 性能测试
 ### 7.1 bmrt_test
@@ -126,21 +142,35 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 | ------------------------------------------- | ----------------- |
 | BM1684/wenet_encoder_fp32.bmodel            | 36.01             |
 | BM1684X/wenet_encoder_fp32.bmodel           | 18.38             |
+| BM1684/wenet_decoder_fp32.bmodel            | xx.xx             |
+| BM1684X/wenet_decoder_fp32.bmodel           | xx.xx             |
 
 > **测试说明**：  
 1. 性能测试结果具有一定的波动性；
-2. `calculate time`已折算为1秒音频的推理时间。
+2. `calculate time`已折算为1秒音频的推理时间(例如，encoder的特征长度为67，对应为0.67s的音频，需要将bmrt_test得到的结果除以0.67；decoder的特征长度为350，对应为3.5s的音频，需要将bmrt_test得到的结果除以3.5)。
 
 ### 7.2 程序运行性能
 参考[C++例程](cpp/README.md)或[Python例程](python/README.md)运行程序，并查看统计的解码时间、预处理时间、推理时间、后处理时间。C++例程打印的预处理时间、推理时间、后处理时间为整个batch处理的时间，需除以相应的batch size才是每张图片的处理时间。
 
 在不同的测试平台上，使用不同的例程、模型测试`datasets/test`，性能测试结果如下：
-|    测试平台  |     测试程序      |             测试模型                |preprocess_time|inference_time|postprocess_time| 
-| ----------- | ---------------- | ----------------------------------- | ------------- | --------- | ----------------- |
-| BM1684 PCIe | wenet.py         | wenet_encoder_fp32.bmodel           | xxxx          | xxxx      | xxxx              |
-| BM1684 SoC  | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 47.12     | 8.56              |
-| BM1684X PCIe| wenet.py         | wenet_encoder_fp32.bmodel           | 0.0002        | 27.61     | 3.25              |
-| BM1684X SoC | wenet.py         | wenet_encoder_fp32.bmodel           | 0.0014        | 27.42     | 8.72              |
+|    测试平台  |  测试程序 |             测试模型                               |preprocess_time|encoder_inference_time|decoder_inference_time|postprocess_time| 
+| ----------- | --------- | ----------------------------------------------------- | ------------- | -------------------- | -------------------- | ----------------- |
+| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 47.12 | xxxx  | 8.56  |
+| BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0002 | 27.61 | xxxx  | 3.25  |
+| BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 27.42 | xxxx  | 8.72  |
+| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 PCIe | wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 SoC  | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X PCIe| wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X SoC | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 PCIe | wenet.pcie| wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 SoC  | wenet.soc | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X PCIe| wenet.pcie| wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X SoC | wenet.soc | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |  
 
 
 > **测试说明**：  
