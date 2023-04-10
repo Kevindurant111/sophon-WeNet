@@ -282,6 +282,7 @@ if __name__ == '__main__':
             beam_log_probs_idx = np.concatenate(beam_log_probs_idx, axis=1)
             
             if args.mode == 'attention_rescoring':
+                start_time = time.time()
                 beam_size = beam_log_probs.shape[-1]
                 batch_size = beam_log_probs.shape[0]
                 num_processes = min(multiprocessing.cpu_count(), batch_size)
@@ -319,9 +320,13 @@ if __name__ == '__main__':
                 hyps_pad_sos_eos = hyps_pad_sos_eos.astype(np.int32)
                 r_hyps_pad_sos_eos = r_hyps_pad_sos_eos.astype(np.int32)
                 decoder_input = [encoder_out, encoder_out_lens, hyps_pad_sos_eos, hyps_lens_sos, r_hyps_pad_sos_eos, ctc_score]
+                postprocess_time += time.time() - start_time
+
                 start_time = time.time()
                 out_dict = decoder.infer_numpy(decoder_input)
-                decoder_inference_time += time.time() - start_time  
+                decoder_inference_time += time.time() - start_time
+
+                start_time = time.time()  
                 best_index = out_dict["best_index"].astype(np.int32)
                 best_sents = []
                 k = 0
@@ -330,6 +335,7 @@ if __name__ == '__main__':
                     best_sents.append(cur_best_sent)
                     k += beam_size
                 hyps = map_batch(best_sents, vocabulary, num_processes)
+                postprocess_time += time.time() - start_time
             
             for i, key in enumerate(keys):
                 content = None
