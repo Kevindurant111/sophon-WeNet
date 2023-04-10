@@ -20,9 +20,10 @@ find_package(Armadillo REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SNDFILE REQUIRED sndfile)
 
-include_directories(/data/work/sophon-WeNet/cpp/ctcdecode-cpp/include)
+set(CTCDECODE_CPP_DIR ${PROJECT_SOURCE_DIR}/ctcdecode-cpp)
+include_directories(${CTCDECODE_CPP_DIR}/include)
 
 aux_source_directory(${PROJECT_SOURCE_DIR}/src SRC_FILES)
 add_executable(${PROJECT_NAME} main.cpp ${SRC_FILES})
-target_link_libraries(${PROJECT_NAME} ${ARMADILLO_LIBRARIES} ${SNDFILE_LIBRARIES} ${the_libbmlib.so} ${the_libbmrt.so} ${the_libbmcv.so} /data/work/sophon-WeNet/cpp/ctcdecode-cpp/build/libctcdecode.so)
+target_link_libraries(${PROJECT_NAME} ${ARMADILLO_LIBRARIES} ${SNDFILE_LIBRARIES} ${the_libbmlib.so} ${the_libbmrt.so} ${the_libbmcv.so} ${CTCDECODE_CPP_DIR}/build/libctcdecode.so)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SNDFILE_INCLUDE_DIRS})
