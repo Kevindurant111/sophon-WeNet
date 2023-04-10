@@ -15,12 +15,12 @@ using namespace bmruntime;
 
 int main(int argc, char** argv) {
     auto start_time = std::chrono::high_resolution_clock::now();
-    std::string data_lists_file = "/data/work/sophon-WeNet/datasets/aishell_S0764/aishell_S0764.list";
+    std::string data_lists_file = "../datasets/aishell_S0764/aishell_S0764.list";
     auto data_map = read_data_lists(data_lists_file);
-    std::string dict_file = "/data/WeNet/config/lang_char.txt";
+    std::string dict_file = "../config/lang_char.txt";
     std::vector<std::string> dict = read_dict(dict_file);
 
-    std::string model = "/data/WeNet/models/BM1684/wenet_encoder_fp32.bmodel";
+    std::string model = "../models/BM1684/wenet_encoder_fp32.bmodel";
     int sample_frequency = 16000;
     int num_mel_bins = 80;
     int frame_shift = 10;
