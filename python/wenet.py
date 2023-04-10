@@ -111,12 +111,13 @@ def get_args():
     parser = argparse.ArgumentParser(description='recognize with your model')
     
     parser.add_argument('--input', default='../datasets/aishell_S0764/aishell_S0764.list', help='path of input')
-    parser.add_argument('--bmodel', default='../models/BM1684/wenet_encoder_fp32.bmodel', help='path of bmodel')
+    parser.add_argument('--encoder_bmodel', default='../models/BM1684/wenet_encoder_fp32.bmodel', help='path of encoder bmodel')
+    parser.add_argument('--decoder_bmodel', default='', help='path of decoder bmodel')
     parser.add_argument('--dev_id', type=int, default=0, help='dev id')
     parser.add_argument('--result_file', default='./result.txt', help='asr result file')
     parser.add_argument('--mode',
                         choices=[
-                            'ctc_greedy_search', 'ctc_prefix_beam_search'],
+                            'ctc_greedy_search', 'ctc_prefix_beam_search', 'attention_rescoring'],
                         default='ctc_prefix_beam_search',
                         help='decoding mode')
     parser.add_argument('--data_type',
@@ -129,6 +130,10 @@ def get_args():
                         type=int,
                         default=1,
                         help='asr result file')
+    parser.add_argument('--decoder_len',
+                        type=int,
+                        default=350,
+                        help='maximum length supported by decoder')
     parser.add_argument('--decoding_chunk_size',
                         default=16,
                         type=int,
@@ -187,8 +192,11 @@ if __name__ == '__main__':
 
     test_data_loader = DataLoader(test_dataset, batch_size=None, num_workers=0)
 
-    # Init encoder
-    encoder = SophonInference(model_path=args.bmodel, device_id=args.dev_id, input_mode=0)
+    # Init encoder and decoder
+    encoder = SophonInference(model_path=args.encoder_bmodel, device_id=args.dev_id, input_mode=0)
+    decoder = None
+    if(args.mode == 'attention_rescoring'):
+        decoder = SophonInference(model_path=args.decoder_bmodel, device_id=args.dev_id, input_mode=0)
 
     # Load dict
     vocabulary = []
@@ -213,7 +221,8 @@ if __name__ == '__main__':
     head = configs["encoder_conf"]["attention_heads"]
     d_k = configs["encoder_conf"]["output_size"] // head
     
-    inference_time = 0.0
+    encoder_inference_time = 0.0
+    decoder_inference_time = 0.0
     postprocess_time = 0.0
     # Start speech recognition
     with torch.no_grad(), open(args.result_file, 'w') as fout:
@@ -245,7 +254,7 @@ if __name__ == '__main__':
                 encoder_input = [chunk_lens, att_cache, cnn_cache, chunk_xs, cache_mask, offset]
                 start_time = time.time()
                 out_dict = encoder.infer_numpy(encoder_input)
-                inference_time += time.time() - start_time
+                encoder_inference_time += time.time() - start_time
                 
                 chunk_out = out_dict["chunk_out"]
                 chunk_log_probs = out_dict["log_probs"]
@@ -272,13 +281,68 @@ if __name__ == '__main__':
             beam_log_probs = np.concatenate(beam_log_probs, axis=1)
             beam_log_probs_idx = np.concatenate(beam_log_probs_idx, axis=1)
             
+            if args.mode == 'attention_rescoring':
+                beam_size = beam_log_probs.shape[-1]
+                batch_size = beam_log_probs.shape[0]
+                num_processes = min(multiprocessing.cpu_count(), batch_size)
+                hyps, score_hyps = ctc_decoding(beam_log_probs, beam_log_probs_idx, encoder_out_lens, vocabulary, args.mode)
+                ctc_score, all_hyps = [], []
+                max_len = 0
+                for hyps in score_hyps:
+                    cur_len = len(hyps)
+                    if len(hyps) < beam_size:
+                        hyps += (beam_size - cur_len) * [(-float("INF"), (0,))]
+                    cur_ctc_score = []
+                    for hyp in hyps:
+                        cur_ctc_score.append(hyp[0])
+                        all_hyps.append(list(hyp[1]))
+                        if len(hyp[1]) > max_len:
+                            max_len = len(hyp[1])
+                    ctc_score.append(cur_ctc_score)
+                    ctc_score = np.array(ctc_score, dtype=np.float32)
+                max_len = args.decoder_len - 2
+                hyps_pad_sos_eos = np.ones(
+                    (batch_size, beam_size, max_len + 2), dtype=np.int64) * IGNORE_ID
+                r_hyps_pad_sos_eos = np.ones(
+                    (batch_size, beam_size, max_len + 2), dtype=np.int64) * IGNORE_ID
+                hyps_lens_sos = np.ones((batch_size, beam_size), dtype=np.int32)
+                k = 0
+                for i in range(batch_size):
+                    for j in range(beam_size):
+                        cand = all_hyps[k]
+                        l = len(cand) + 2
+                        hyps_pad_sos_eos[i][j][0:l] = [sos] + cand + [eos]
+                        r_hyps_pad_sos_eos[i][j][0:l] = [sos] + cand[::-1] + [eos]
+                        hyps_lens_sos[i][j] = len(cand) + 1
+                        k += 1
+                encoder_out = np.pad(encoder_out, [(0, 0),(0, args.decoder_len - encoder_out.shape[1]), (0, 0)], mode='constant', constant_values=0)
+                hyps_pad_sos_eos = hyps_pad_sos_eos.astype(np.int32)
+                r_hyps_pad_sos_eos = r_hyps_pad_sos_eos.astype(np.int32)
+                decoder_input = [encoder_out, encoder_out_lens, hyps_pad_sos_eos, hyps_lens_sos, r_hyps_pad_sos_eos, ctc_score]
+                start_time = time.time()
+                out_dict = decoder.infer_numpy(decoder_input)
+                decoder_inference_time += time.time() - start_time  
+                best_index = out_dict["best_index"].astype(np.int32)
+                best_sents = []
+                k = 0
+                for idx in best_index:
+                    cur_best_sent = all_hyps[k: k + beam_size][idx]
+                    best_sents.append(cur_best_sent)
+                    k += beam_size
+                hyps = map_batch(best_sents, vocabulary, num_processes)
+            
             for i, key in enumerate(keys):
-                content = result
+                content = None
+                if args.mode == 'attention_rescoring':
+                    content = hyps[i]
+                else:
+                    content = result
                 logging.info('{} {}'.format(key, content))
                 fout.write('{} {}\n'.format(key, content))
                 
     logging.info("------------------ Predict Time Info ----------------------")
     total_data_time = calculate_total_time(args.input)
     logging.info("preprocess_time(ms): {:.4f}".format((preprocess_time / total_data_time) * 1000))
-    logging.info("inference_time(ms): {:.4f}".format((inference_time / total_data_time) * 1000))
+    logging.info("encoder_inference_time(ms): {:.4f}".format((encoder_inference_time / total_data_time) * 1000))
+    logging.info("decoder_inference_time(ms): {:.4f}".format((decoder_inference_time / total_data_time) * 1000))
     logging.info("postprocess_time(ms): {:.4f}".format((postprocess_time / total_data_time) * 1000))
