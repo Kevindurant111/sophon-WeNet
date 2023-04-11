@@ -10,8 +10,9 @@
     * [2.1 x86/arm PCIe平台](#21-x86arm-pcie平台)
     * [2.2 SoC平台](#22-soc平台)
 * [3. 推理测试](#3-推理测试)
-    * [3.1 参数说明](#31-参数说明)
-    * [3.2 测试音频](#32-测试音频)
+    * [3.1 开启加速固件](#31-开启加速固件)
+    * [3.2 参数说明](#32-参数说明)
+    * [3.3 测试音频](#33-测试音频)
 
 cpp目录下提供了C++例程以供参考使用，具体情况如下：
 | 序号  | C++例程      | 说明                                 |
@@ -68,7 +69,23 @@ make
 ## 3. 推理测试
 对于PCIe平台，可以直接在PCIe平台上推理测试；对于SoC平台，需将交叉编译生成的可执行文件及所需的模型、测试数据拷贝到SoC平台中测试。测试的参数及运行方式是一致的，下面主要以PCIe模式进行介绍。
 
-### 3.1 参数说明
+### 3.1 开启加速固件
+在BM1684上运行测试时需要先开启加速固件, 否则模型可正常推理但是推理速度变慢; 在BM1684X上不需要这一步骤。
+```bash
+# step1 下载固件包
+python3 -m dfn --url http://disk-sophgo-vip.quickconnect.cn/sharing/UVNz2Xi83
+# step2 解压固件包
+tar -xvf tpu-kernel-1684_v3.1.3-64586553-230125.tar.gz
+# step3 进入文件夹
+cd tpu-kernel-1684_v3.1.3-64586553-230125
+# step4 加载基础固件
+python3 ./scripts/load_firmware.py --firmware ./firmware/bm1684_ddr.bin_v3.1.3-64586553-230125 --firmware_tcm ./firmware/bm1684_tcm.bin_v3.1.3-64586553-230125
+# step5 加载加速固件
+test_update_fw ./firmware/bm1684_tcm_icache.bin_v3.1.3-64586553-230125 ./firmware/bm1684_ddr_icache.bin_v3.1.3-64586553-230125 0
+# Note: 设备每次重启之后都需要重新执行step3和step5, 即加载加速固件, 基础固件无需每次重启加载
+```
+
+### 3.2 参数说明
 可执行程序默认有一套参数，请注意根据实际情况进行传参，具体参数说明如下：
 ```bash
 Usage: wenet.pcie [params]
@@ -81,7 +98,7 @@ Usage: wenet.pcie [params]
 ```
 **注意：** CPP传参与python不同，需要用等于号，例如`./wenet.pcie --encoder_bmodel=xxx`。
 
-### 3.2 测试音频
+### 3.3 测试音频
 图片测试实例如下，支持对整个图片文件夹进行测试。
 ```bash
 ./wenet.pcie
