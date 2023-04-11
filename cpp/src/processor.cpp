@@ -3,6 +3,7 @@
 #include "bmruntime_cpp.h"
 #include <chrono>
 #define MILLISECONDS_TO_SECONDS 0.001
+#define USE_BMCV_FFT 1
 
 // todo
 arma::fmat resample(arma::fmat input, int sample_rate, int resample_rate) {
@@ -225,21 +226,20 @@ arma::fmat fbank(arma::fmat input, int num_mel_bins, int frame_length, int frame
     // arma::fmat spectrum = arma::pow(arma::pow(arma::real(fft_out), 2.0) + arma::pow(arma::imag(fft_out), 2.0), 0.5); // 55ms
     // spectrum = spectrum.submat(0, 0, spectrum.n_rows - 1, floor(spectrum.n_cols / 2));
 
-    /*plan B: 212ms */
-    //arma::fmat spectrum(input.n_rows, floor(input.n_cols / 2) + 1, arma::fill::zeros);
-    //for(arma::uword i = 0; i < spectrum.n_rows; i++) {
-    //    arma::frowvec v = input.row(i);
-    //    arma::cx_frowvec fft_v = arma::fft(v);
-    //    fft_v = fft_v.subvec(0, floor(fft_v.n_cols / 2));
-    //    arma::frowvec real_v = arma::pow(arma::pow(arma::real(fft_v), 2.0) + arma::pow(arma::imag(fft_v), 2.0), 0.5);
-    //    spectrum.row(i) = real_v;
-    //}
-    auto start_time = std::chrono::high_resolution_clock::now();
+#if USE_BMCV_FFT
+    /*plan C: 145 ms */
     arma::fmat spectrum = bm_fft(input);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    std::cout << "程序运行时间为 " << duration.count() << " 毫秒" << std::endl;
-
+#else
+    /*plan B: 212ms */
+    arma::fmat spectrum(input.n_rows, floor(input.n_cols / 2) + 1, arma::fill::zeros);
+    for(arma::uword i = 0; i < spectrum.n_rows; i++) {
+       arma::frowvec v = input.row(i);
+       arma::cx_frowvec fft_v = arma::fft(v);
+       fft_v = fft_v.subvec(0, floor(fft_v.n_cols / 2));
+       arma::frowvec real_v = arma::pow(arma::pow(arma::real(fft_v), 2.0) + arma::pow(arma::imag(fft_v), 2.0), 0.5);
+       spectrum.row(i) = real_v;
+    }
+#endif
 
     /* rest: 22 ms */   
     if(use_power) {

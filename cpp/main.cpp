@@ -6,32 +6,90 @@
 #include <iostream>
 #include <vector>
 #include <iostream>
+#include <sys/stat.h>
+#include <yaml-cpp/yaml.h>
 #include "bmruntime_cpp.h"
 #include "util.h"
 #include "utils.hpp"
 #include "wenet.h"
+#include "opencv2/opencv.hpp"
 
 using namespace bmruntime;
 
 int main(int argc, char** argv) {
     auto start_time = std::chrono::high_resolution_clock::now();
-    std::string data_lists_file = "../datasets/aishell_S0764/aishell_S0764.list";
-    auto data_map = read_data_lists(data_lists_file);
-    std::string dict_file = "../config/lang_char.txt";
+    std::cout.setf(std::ios::fixed);
+    // get params
+    const char *keys="{encoder_bmodel | ../models/BM1684/wenet_encoder_fp32.bmodel | encoder bmodel file path}"
+    "{decoder_bmodel |  | decoder bmodel file path}"
+    "{dict_file | ../config/lang_char.txt | dictionary file path}"
+    "{config_file | ../config/train_u2++_conformer.yaml | config file path}"
+    "{result_file | ./result.txt | result file path}"
+    "{input | ../datasets/aishell_S0764/aishell_S0764.list | input path, images direction or video file path}"
+    "{dev_id | 0 | TPU device id}"
+    "{decoding_chunk_size | 16 | TPU device id}"
+    "{subsampling_rate | 4 | TPU device id}"
+    "{context | 7 | TPU device id}"
+    "{help | 0 | print help information.}";
+    cv::CommandLineParser parser(argc, argv, keys);
+    if (parser.get<bool>("help")) {
+        parser.printMessage();
+        return 0;
+    }
+
+    std::string encoder_bmodel = parser.get<std::string>("encoder_bmodel");
+    std::string decoder_bmodel = parser.get<std::string>("decoder_bmodel");
+    std::string dict_file = parser.get<std::string>("dict_file");
+    std::string config_file = parser.get<std::string>("config_file");
+    std::string result_file = parser.get<std::string>("result_file");
+    std::string input = parser.get<std::string>("input");
+    int dev_id = parser.get<int>("dev_id");
+    int decoding_chunk_size = parser.get<int>("decoding_chunk_size");
+    int subsampling_rate = parser.get<int>("subsampling_rate");
+    int context = parser.get<int>("context");
+
+    // check params
+    struct stat info;
+    if (stat(encoder_bmodel.c_str(), &info) != 0) {
+        std::cout << "Cannot find valid encoder model file." << std::endl;
+        exit(1);
+    }
+    if (stat(dict_file.c_str(), &info) != 0){
+        std::cout << "Cannot find valid dictionary file." << std::endl;
+        exit(1);
+    }
+    if (stat(config_file.c_str(), &info) != 0){
+        std::cout << "Cannot find valid config file." << std::endl;
+        exit(1);
+    }
+    if (stat(input.c_str(), &info) != 0){
+        std::cout << "Cannot find input path." << std::endl;
+        exit(1);
+    }
+
+    auto data_map = read_data_lists(input);
     std::vector<std::string> dict = read_dict(dict_file);
 
-    std::string model = "../models/BM1684/wenet_encoder_fp32.bmodel";
-    int sample_frequency = 16000;
-    int num_mel_bins = 80;
-    int frame_shift = 10;
-    int frame_length = 25;
+    // int sample_frequency = 16000;
+    // int num_mel_bins = 80;
+    // int frame_shift = 10;
+    // int frame_length = 25;
 
-    int decoding_chunk_size = 16;
-    int subsampling_rate = 4;
-    int context = 7;
+    // load configuration file
+    // cv::FileStorage fs(config_file, cv::FileStorage::READ);
+    // int sample_frequency = (int)fs["dataset_conf"]["resample_conf"]["resample_rate"];
+    // int num_mel_bins = (int)fs["dataset_conf"]["fbank_conf"]["num_mel_bins"];
+    // int frame_shift = (int)fs["dataset_conf"]["fbank_conf"]["frame_shift"];
+    // int frame_length = (int)fs["dataset_conf"]["fbank_conf"]["frame_length"];
 
-    std::string result_file = "/data/work/sophon-WeNet/cpp/result.txt";
-    // Check if file exists
+    std::ifstream fin(config_file);
+    YAML::Node doc = YAML::Load(fin);
+    fin.close();
+    int sample_frequency = doc["dataset_conf"]["resample_conf"]["resample_rate"].as<int>();
+    int num_mel_bins = doc["dataset_conf"]["fbank_conf"]["num_mel_bins"].as<int>();
+    int frame_shift = doc["dataset_conf"]["fbank_conf"]["frame_shift"].as<int>();
+    int frame_length = doc["dataset_conf"]["fbank_conf"]["frame_length"].as<int>();
+
     std::FILE* file_exists = std::fopen(result_file.c_str(), "r");
     if (file_exists) {
         // File exists, delete it
@@ -40,8 +98,8 @@ int main(int argc, char** argv) {
     }
 
     // load model
-    auto ctx = std::make_shared<Context>();
-    bm_status_t status = ctx->load_bmodel(model.c_str());
+    auto ctx = std::make_shared<Context>(dev_id);
+    bm_status_t status = ctx->load_bmodel(encoder_bmodel.c_str());
     assert(BM_SUCCESS == status);
 
     WeNet wenet(ctx);

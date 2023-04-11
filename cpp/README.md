@@ -30,6 +30,8 @@ cpp目录下提供了C++例程以供参考使用，具体情况如下：
 ```bash
 # install armadillo
 sudo apt-get install -y liblapack-dev libblas-dev libopenblas-dev libarmadillo-dev libsndfile1-dev
+# install yaml-cpp
+sudo apt-get install libyaml-cpp-dev libyaml-cpp0.6
 # install ctcdecode and follow the readme in ctcdecode-cpp to compile it
 cd cpp/
 git clone https://github.com/Kevindurant111/ctcdecode-cpp.git
@@ -77,7 +79,7 @@ Usage: wenet.pcie [params]
         --help (value:true)
                 print help information.
 ```
-**注意：** CPP传参与python不同，需要用等于号，例如`./wenet.pcie --bmodel=xxx`。
+**注意：** CPP传参与python不同，需要用等于号，例如`./wenet.pcie --encoder_bmodel=xxx`。
 
 ### 3.2 测试音频
 图片测试实例如下，支持对整个图片文件夹进行测试。
