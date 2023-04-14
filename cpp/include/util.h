@@ -17,6 +17,7 @@ std::vector<std::string> ctc_decoding(void* log_probs,
     int beam_size, 
     int batch_size, 
     const std::vector<std::string> &vocabulary, 
+    std::vector<std::vector<std::pair<double, std::vector<int>>>>& score_hyps, 
     const std::string& mode
 );
 
