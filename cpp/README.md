@@ -90,18 +90,34 @@ test_update_fw ./firmware/bm1684_tcm_icache.bin_v3.1.3-64586553-230125 ./firmwar
 ```bash
 Usage: wenet.pcie [params]
         --encoder_bmodel (value:../models/BM1684/wenet_encoder_fp32.bmodel)
-                bmodel file path
+                encoder bmodel file path
+        --decoder_bmodel (value: )
+                decoder bmodel file path
+        --config_file (value:../config/train_u2++_conformer.yaml)
+                config file path
+        --result_file (value:./result.txt)
+                result file path
+        --input (value:../datasets/aishell_S0764/aishell_S0764.list)
+                input path, images direction or video file path
+        --mode (value:ctc_prefix_beam_search)
+                decoding mode, choose from 'ctc_greedy_search', 'ctc_prefix_beam_search' and 'attention_rescoring'
         --dev_id (value:0)
                 TPU device id
         --help (value:true)
                 print help information.
 ```
-**注意：** CPP传参与python不同，需要用等于号，例如`./wenet.pcie --encoder_bmodel=xxx`。
+**注意：**  
+- CPP传参与python不同，需要用等于号，例如`./wenet.pcie --encoder_bmodel=xxx`。  
+- 除上述参数外，其余参数均为固定参数，请勿改动。
 
 ### 3.3 测试音频
 图片测试实例如下，支持对整个图片文件夹进行测试。
 ```bash
-./wenet.pcie
+./wenet.pcie --encoder_bmodel=../models/BM1684/wenet_encoder_fp32.bmodel --dict_file=../config/lang_char.txt --config_file=../config/train_u2++_conformer.yaml --result_file=./result.txt --input=../datasets/aishell_S0764/aishell_S0764.list --mode=ctc_prefix_beam_search --dev_id=0
+```
+默认情况下decoder不开启，如果想要开启decoder重打分，请指定mode和decoder_bmodel参数如下：
+```bash
+./wenet.pcie --encoder_bmodel=../models/BM1684/wenet_encoder_fp32.bmodel --decoder_bmodel=../models/BM1684/wenet_decoder_fp32.bmodel --dict_file=../config/lang_char.txt --config_file=../config/train_u2++_conformer.yaml --result_file=./result.txt --input=../datasets/aishell_S0764/aishell_S0764.list --mode=attention_rescoring --dev_id=0
 ```
 测试结束后，会将预测的结果文本保存在`result.txt`下，同时会打印预测结果、推理时间等信息。
 

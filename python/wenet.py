@@ -319,6 +319,7 @@ if __name__ == '__main__':
                 encoder_out = np.pad(encoder_out, [(0, 0),(0, args.decoder_len - encoder_out.shape[1]), (0, 0)], mode='constant', constant_values=0)
                 hyps_pad_sos_eos = hyps_pad_sos_eos.astype(np.int32)
                 r_hyps_pad_sos_eos = r_hyps_pad_sos_eos.astype(np.int32)
+                encoder_out_lens = np.full(args.batch_size, fill_value=encoder_out.shape[1], dtype=np.int32)
                 decoder_input = [encoder_out, encoder_out_lens, hyps_pad_sos_eos, hyps_lens_sos, r_hyps_pad_sos_eos, ctc_score]
                 postprocess_time += time.time() - start_time
 
