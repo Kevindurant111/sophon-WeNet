@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
     "{config_file | ../config/train_u2++_conformer.yaml | config file path}"
     "{result_file | ./result.txt | result file path}"
     "{input | ../datasets/aishell_S0764/aishell_S0764.list | input path, images direction or video file path}"
+    "{mode | ctc_prefix_beam_search | decoding mode}"
     "{dev_id | 0 | TPU device id}"
     "{decoding_chunk_size | 16 | TPU device id}"
     "{subsampling_rate | 4 | TPU device id}"
@@ -43,6 +44,7 @@ int main(int argc, char** argv) {
     std::string config_file = parser.get<std::string>("config_file");
     std::string result_file = parser.get<std::string>("result_file");
     std::string input = parser.get<std::string>("input");
+    std::string mode = parser.get<std::string>("mode");
     int dev_id = parser.get<int>("dev_id");
     int decoding_chunk_size = parser.get<int>("decoding_chunk_size");
     int subsampling_rate = parser.get<int>("subsampling_rate");
@@ -52,6 +54,10 @@ int main(int argc, char** argv) {
     struct stat info;
     if (stat(encoder_bmodel.c_str(), &info) != 0) {
         std::cout << "Cannot find valid encoder model file." << std::endl;
+        exit(1);
+    }
+    if(mode == "attention_rescoring" && stat(decoder_bmodel.c_str(), &info) != 0) {
+        std::cout << "Cannot find valid decoder model file." << std::endl;
         exit(1);
     }
     if (stat(dict_file.c_str(), &info) != 0){
@@ -98,12 +104,19 @@ int main(int argc, char** argv) {
     }
 
     // load model
-    auto ctx = std::make_shared<Context>(dev_id);
-    bm_status_t status = ctx->load_bmodel(encoder_bmodel.c_str());
+    auto encoder_ctx = std::make_shared<Context>(dev_id);
+    bm_status_t status = encoder_ctx->load_bmodel(encoder_bmodel.c_str());
     assert(BM_SUCCESS == status);
 
-    WeNet wenet(ctx);
-    wenet.Init(dict, sample_frequency, num_mel_bins, frame_shift, frame_length, decoding_chunk_size, subsampling_rate, context);
+    std::shared_ptr<Context> decoder_ctx;
+    if(mode == "attention_rescoring") {
+        decoder_ctx = std::make_shared<Context>(dev_id);
+        bm_status_t status = decoder_ctx->load_bmodel(decoder_bmodel.c_str());
+        assert(BM_SUCCESS == status);
+    }
+
+    WeNet wenet(encoder_ctx, decoder_ctx);
+    wenet.Init(dict, sample_frequency, num_mel_bins, frame_shift, frame_length, decoding_chunk_size, subsampling_rate, context, mode);
 
     // profiling
     TimeStamp wenet_ts;

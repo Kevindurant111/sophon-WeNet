@@ -1,5 +1,6 @@
 #include "wenet.h"
 #include "wrapper.h"
+#include "ctcdecode.h"
 #define IGNORE_ID -1
 using namespace bmruntime;
 
@@ -37,8 +38,8 @@ int WeNet::Init(const std::vector<std::string>& dict, int sample_frequency, int 
         assert(decoder_net->info()->input_num == 6);
 
         // Initialize the memory space required for the input and output tensors
-        decoder_inputs = encoder_net->Inputs();
-        decoder_outputs = encoder_net->Outputs();
+        decoder_inputs = decoder_net->Inputs();
+        decoder_outputs = decoder_net->Outputs();
 
         max_len = decoder_inputs[0]->tensor()->shape.dims[1] - 2;  
     }
@@ -159,7 +160,7 @@ int WeNet::inference() {
 
         std::vector<std::vector<std::pair<double, std::vector<int>>>> score_hyps;
         LOG_TS(m_ts, "wenet postprocess");
-        std::vector<std::string> hyps = ctc_decoding(log_probs, log_probs_idx, chunk_out_lens, beam_size, batch_size, dict, score_hyps, mode);
+        std::vector<std::string> hyps = ctc_decoding(log_probs, log_probs_idx, chunk_out_lens, beam_size, batch_size, dict, score_hyps);
         LOG_TS(m_ts, "wenet postprocess");
         std::cout << hyps[0] << std::endl;
         result += hyps[0];
@@ -198,22 +199,24 @@ int WeNet::inference() {
             ctc_score.push_back(cur_ctc_score);
         }
 
-        arma::imat hyps_pad_sos_eos = arma::imat(beam_size, max_len + 2, arma::fill::ones) * IGNORE_ID;
-        arma::imat r_hyps_pad_sos_eos = arma::imat(beam_size, max_len + 2, arma::fill::ones) * IGNORE_ID;
-        arma::irowvec hyps_lens_sos = arma::irowvec(beam_size, arma::fill::ones);
+        arma::Mat<int> hyps_pad_sos_eos = arma::Mat<int>(beam_size, max_len + 2, arma::fill::ones) * IGNORE_ID;
+        arma::Mat<int> r_hyps_pad_sos_eos = arma::Mat<int>(beam_size, max_len + 2, arma::fill::ones) * IGNORE_ID;
+        arma::Row<int> hyps_lens_sos = arma::Row<int>(beam_size, arma::fill::ones);
 
         int k = 0;
         for(int j = 0; j < beam_size; j++) {
             std::vector<int> cand = all_hyps[k];
-            arma::irowvec cand_rowvec = arma::conv_to<arma::irowvec>::from(cand);
+            arma::Row<int> cand_rowvec = arma::conv_to<arma::Row<int>>::from(cand);
 
             int l = cand.size() + 2;
             hyps_pad_sos_eos(j, 0) = sos;
             hyps_pad_sos_eos(j, l - 1) = eos;
             r_hyps_pad_sos_eos(j, 0) = sos;
             r_hyps_pad_sos_eos(j, l - 1) = eos;
-            hyps_pad_sos_eos.row(j).subvec(1, l - 2) = cand_rowvec;
-            r_hyps_pad_sos_eos.row(j).subvec(1, l - 2) = arma::reverse(cand_rowvec);
+            if(l > 2) {
+                hyps_pad_sos_eos.row(j).subvec(1, l - 2) = cand_rowvec;
+                r_hyps_pad_sos_eos.row(j).subvec(1, l - 2) = arma::reverse(cand_rowvec);
+            }
 
             hyps_lens_sos(j) = cand.size() + 1;
             k += 1;
@@ -223,15 +226,53 @@ int WeNet::inference() {
         encoder_out = arma::join_cols(encoder_out, pad_matrix);
 
         void* encoder_out_ptr = mat_to_sys_mem<float>(encoder_out);
+        int encoder_out_lens = max_len + 2;
+        void* encoder_out_lens_ptr = static_cast<void*>(&encoder_out_lens);
+        void* hyps_pad_sos_eos_ptr = mat_to_sys_mem<int>(hyps_pad_sos_eos);
+        void* hyps_lens_sos_ptr = mat_to_sys_mem<int>(hyps_lens_sos);
+        void* r_hyps_pad_sos_eos_ptr = mat_to_sys_mem<int>(r_hyps_pad_sos_eos);
+        arma::fmat ctc_score_fmat(ctc_score.size(), ctc_score[0].size());
+        for(arma::uword i = 0; i < ctc_score_fmat.n_rows; i++) {
+            ctc_score_fmat.row(i) = arma::frowvec(ctc_score[i]);
+        }
+        void* ctc_score_ptr = mat_to_sys_mem<float>(ctc_score_fmat);
 
-        decoder_inputs[0]->CopyTo(encoder_out_ptr);
-        decoder_inputs[2]->CopyTo(encoder_out_ptr);
-        decoder_inputs[3]->CopyTo(encoder_out_ptr);
-        decoder_inputs[4]->CopyTo(encoder_out_ptr);
+        decoder_inputs[0]->CopyFrom(encoder_out_ptr);
+        decoder_inputs[1]->CopyFrom(encoder_out_lens_ptr);
+        decoder_inputs[2]->CopyFrom(hyps_pad_sos_eos_ptr);
+        decoder_inputs[3]->CopyFrom(hyps_lens_sos_ptr);
+        decoder_inputs[4]->CopyFrom(r_hyps_pad_sos_eos_ptr);
+        decoder_inputs[5]->CopyFrom(ctc_score_ptr);
+        LOG_TS(m_ts, "wenet inference");
+        auto status = decoder_net->Forward();
+        LOG_TS(m_ts, "wenet inference");
+        assert(BM_SUCCESS == status);
+
+        void* best_idx = calloc(decoder_outputs[0]->num_elements(), sizeof(int));
+        decoder_outputs[0]->CopyTo(best_idx);
+
+        k = 0;
+        std::vector<std::vector<int>> best_sents;
+        int* best_idx_int_ptr = static_cast<int*>(best_idx);
+        for(uint64_t i = 0; i < decoder_outputs[0]->num_elements(); i++) {
+            best_sents.push_back(all_hyps[k + *(best_idx_int_ptr + i)]);
+            std::cout << *(best_idx_int_ptr + i) << std::endl;
+            k += beam_size;
+        }
+        
+        int num_cores = std::thread::hardware_concurrency();
+        size_t num_processes = std::min(num_cores, batch_size);
+        std::vector<std::string> hyps = map_batch(best_sents, dict, num_processes);
+        result = hyps[0];
 
         std::free(encoder_out_ptr);
+        std::free(hyps_pad_sos_eos_ptr);
+        std::free(hyps_lens_sos_ptr);
+        std::free(r_hyps_pad_sos_eos_ptr);
+        std::free(ctc_score_ptr);
         std::free(beam_log_probs_ptr);
         std::free(beam_log_probs_idx_ptr);
+        std::free(best_idx);
     }
     
     std::free(att_cache);
