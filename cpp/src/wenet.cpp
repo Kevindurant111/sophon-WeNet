@@ -256,7 +256,6 @@ int WeNet::inference() {
         int* best_idx_int_ptr = static_cast<int*>(best_idx);
         for(uint64_t i = 0; i < decoder_outputs[0]->num_elements(); i++) {
             best_sents.push_back(all_hyps[k + *(best_idx_int_ptr + i)]);
-            std::cout << *(best_idx_int_ptr + i) << std::endl;
             k += beam_size;
         }
         
