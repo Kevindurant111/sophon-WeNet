@@ -1,11 +1,9 @@
-#ifndef WRAPPER_H
-#define WRAPPER_H
-
 #include <armadillo>
 #include <string>
 #include <assert.h>
 #include "bmruntime_cpp.h"
 #include "bmcv_api.h"
+#include "wrapper.h"
 
 using namespace bmruntime;
 
@@ -47,20 +45,6 @@ arma::fmat arange(int size) {
     arma::fmat lin_mat(size, 1);
     lin_mat.col(0) = lin_vec;
     return lin_mat;
-}
-
-// Convert the contents pointed to by void* to fmat, noting that mat is stored by column
-arma::fmat sys_mem_to_fmat(void* ptr, int n_rows, int n_cols) {
-    arma::fmat res(n_cols, n_rows);
-    std::memcpy(res.memptr(), ptr, sizeof(float) * n_rows * n_cols);
-    return arma::trans(res);
-}
-
-// Convert frowvec to the contents pointed to by void*
-void* frowvec_to_sys_mem(const arma::frowvec& X) {
-    void* void_ptr = std::malloc(X.n_elem * sizeof(float));
-    std::memcpy(void_ptr, X.memptr(), X.n_elem * sizeof(float));
-    return void_ptr;
 }
 
 // Matrix multiplication, no bugs :)
@@ -130,7 +114,7 @@ arma::fmat bm_fft(const arma::fmat& A) {
     void *plan = nullptr;
     bmcv_fft_1d_create_plan(handle, 1, n_cols, true, plan);
     for(int i = 0; i < n_rows; i++) {
-        void* input_real = frowvec_to_sys_mem(A.row(i));
+        void* input_real = rowvec_to_sys_mem<float>(A.row(i));
 
         bm_memcpy_s2d(handle, input_real_device, input_real);
         bmcv_fft_execute_real_input(handle, input_real_device, out_real_device, out_imaginary_device, plan);
@@ -156,4 +140,3 @@ arma::fmat bm_fft(const arma::fmat& A) {
     return result;
 }
 
-#endif // WRAPPER_H

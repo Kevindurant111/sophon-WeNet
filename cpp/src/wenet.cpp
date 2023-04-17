@@ -164,9 +164,9 @@ int WeNet::inference() {
         LOG_TS(m_ts, "wenet postprocess");
         std::cout << hyps[0] << std::endl;
         result += hyps[0];
-        encoder_out = arma::join_cols(encoder_out, sys_mem_to_fmat(chunk_out, out_size, out_length));
-        beam_log_probs = arma::join_cols(beam_log_probs, sys_mem_to_fmat(log_probs, out_size, beam_size));
-        beam_log_probs_idx = arma::join_cols(beam_log_probs_idx, sys_mem_to_fmat(log_probs_idx, out_size, beam_size));
+        encoder_out = arma::join_cols(encoder_out, sys_mem_to_mat<float>(chunk_out, out_size, out_length));
+        beam_log_probs = arma::join_cols(beam_log_probs, sys_mem_to_mat<float>(log_probs, out_size, beam_size));
+        beam_log_probs_idx = arma::join_cols(beam_log_probs_idx, sys_mem_to_mat<float>(log_probs_idx, out_size, beam_size));
 
         std::free(chunk_lens_ptr);
         std::free(chunk_xs_ptr);

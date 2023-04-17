@@ -17,7 +17,7 @@ arma::fmat pad(const arma::fmat& X, int num, int dim);
 // Generate a matrix of shape [size, 1] with elements increasing linearly from 0 to size-1 
 arma::fmat arange(int size);
 
-// Convert fmat to the contents pointed to by void*, noting that mat is stored by column
+// Convert mat to the contents pointed to by void*, noting that mat is stored by column
 template<typename T>
 void* mat_to_sys_mem(const arma::Mat<T>& X) {
     arma::Mat<T> trans_X = arma::trans(X);
@@ -37,11 +37,21 @@ void* mat_to_sys_mem(const arma::Mat<T>& X) {
     return ptr;
 }
 
-// Convert the contents pointed to by void* to fmat, noting that mat is stored by column
-arma::fmat sys_mem_to_fmat(void* ptr, int n_rows, int n_cols);
+// Convert the contents pointed to by void* to mat, noting that mat is stored by column
+template<typename T>
+arma::Mat<T> sys_mem_to_mat(void* ptr, int n_rows, int n_cols) {
+    arma::Mat<T> res(n_cols, n_rows);
+    std::memcpy(res.memptr(), ptr, sizeof(T) * n_rows * n_cols);
+    return arma::trans(res);
+}
 
-// Convert frowvec to the contents pointed to by void*
-void* frowvec_to_sys_mem(const arma::frowvec& X);
+// Convert rowvec to the contents pointed to by void*
+template<typename T>
+void* rowvec_to_sys_mem(const arma::Row<T>& X) {
+    void* void_ptr = std::malloc(X.n_elem * sizeof(T));
+    std::memcpy(void_ptr, X.memptr(), X.n_elem * sizeof(T));
+    return void_ptr;
+}
 
 // Matrix multiplication, no bugs :)
 arma::fmat matmul(const arma::fmat& A, const arma::fmat& B);
