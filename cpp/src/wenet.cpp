@@ -222,7 +222,7 @@ int WeNet::inference() {
             k += 1;
         }
 
-        arma::fmat pad_matrix(max_len + 2 - encoder_out.n_rows, encoder_out.n_cols);
+        arma::fmat pad_matrix(max_len + 2 - encoder_out.n_rows, encoder_out.n_cols, arma::fill::zeros);
         encoder_out = arma::join_cols(encoder_out, pad_matrix);
 
         void* encoder_out_ptr = mat_to_sys_mem<float>(encoder_out);
