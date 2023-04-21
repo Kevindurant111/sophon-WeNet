@@ -122,6 +122,6 @@ Usage: wenet.pcie [params]
 ```
 测试结束后，会将预测的结果文本保存在`result.txt`下，同时会打印预测结果、推理时间等信息。  
 
-## 4.FAQ
+## 4. FAQ
 - 1684x上暂不支持bm_fft，使用1684x设备请将src/processor.cpp中的“#define USE_BMCV_FFT 1”修改为“#define USE_BMCV_FFT 0”。
 
