@@ -37,7 +37,8 @@ WeNet是一款面向工业落地应用的语音识别工具包，提供了从语
 # 安装unzip，若已安装请跳过
 sudo apt install unzip
 chmod -R +x scripts/
-./scripts/download.sh
+# ${platform}请指定为soc或pcie
+./scripts/download.sh ${platform}
 ```
 
 下载的模型包括：
