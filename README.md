@@ -156,7 +156,7 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 在不同的测试平台上，使用不同的例程、模型测试`datasets/test`，性能测试结果如下：
 |    测试平台  |  测试程序 |             测试模型                               |preprocess_time|encoder_inference_time|decoder_inference_time|postprocess_time| 
 | ----------- | --------- | ----------------------------------------------------- | ------------- | -------------------- | -------------------- | ----------------- |
-| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
+| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0002 | 44.31 | none  | 0.98  |
 | BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 47.12 | none  | 8.56  |
 | BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0002 | 27.61 | none  | 3.25  |
 | BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 27.42 | none  | 8.72  |
