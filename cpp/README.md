@@ -38,6 +38,7 @@ sudo apt-get install libyaml-cpp-dev libyaml-cpp0.6
 cd cpp/
 git clone https://github.com/Kevindurant111/ctcdecode-cpp.git
 ```
+将ctcdecode-cpp项目克隆到本地后，请参考其提供的README进行编译。  
 
 ## 2. 程序编译
 C++程序运行前需要编译可执行文件。
