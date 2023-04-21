@@ -116,14 +116,14 @@ cat online_wer | grep "Overall"
 | BM1684 SoC   | wenet.soc    | wenet_encoder_fp32.bmodel                             | 2.70%  |
 | BM1684X PCIe | wenet.pcie   | wenet_encoder_fp32.bmodel                             | 2.70%  | 
 | BM1684X SoC  | wenet.soc    | wenet_encoder_fp32.bmodel                             | 2.70%  |
-| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
-| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
-| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  | 
-| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
-| BM1684 PCIe  | wenet.pcie   | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
-| BM1684 SoC   | wenet.soc    | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |
-| BM1684X PCIe | wenet.pcie   | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  | 
-| BM1684X SoC  | wenet.soc    | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.87%  |    
+| BM1684 PCIe  | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  |
+| BM1684 SoC   | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  |
+| BM1684X PCIe | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  | 
+| BM1684X SoC  | wenet.py     | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  |
+| BM1684 PCIe  | wenet.pcie   | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  |
+| BM1684 SoC   | wenet.soc    | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  |
+| BM1684X PCIe | wenet.pcie   | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  | 
+| BM1684X SoC  | wenet.soc    | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 1.80%  |    
 
 > **测试说明**：  
 1. 在使用的模型相同的情况下，wer在不同的测试平台上是相同的。
@@ -142,8 +142,8 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 | ------------------------------------------- | ----------------- |
 | BM1684/wenet_encoder_fp32.bmodel            | 36.01             |
 | BM1684X/wenet_encoder_fp32.bmodel           | 18.38             |
-| BM1684/wenet_decoder_fp32.bmodel            | xx.xx             |
-| BM1684X/wenet_decoder_fp32.bmodel           | xx.xx             |
+| BM1684/wenet_decoder_fp32.bmodel            | 223.55            |
+| BM1684X/wenet_decoder_fp32.bmodel           | 181.57            |
 
 > **测试说明**：  
 1. 性能测试结果具有一定的波动性；
@@ -155,18 +155,18 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 在不同的测试平台上，使用不同的例程、模型测试`datasets/test`，性能测试结果如下：
 |    测试平台  |  测试程序 |             测试模型                               |preprocess_time|encoder_inference_time|decoder_inference_time|postprocess_time| 
 | ----------- | --------- | ----------------------------------------------------- | ------------- | -------------------- | -------------------- | ----------------- |
-| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
-| BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 47.12 | xxxx  | 8.56  |
-| BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0002 | 27.61 | xxxx  | 3.25  |
-| BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 27.42 | xxxx  | 8.72  |
+| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
+| BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 47.12 | none  | 8.56  |
+| BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0002 | 27.61 | none  | 3.25  |
+| BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 27.42 | none  | 8.72  |
 | BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
 | BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
 | BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
 | BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
-| BM1684 PCIe | wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
-| BM1684 SoC  | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
-| BM1684X PCIe| wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
-| BM1684X SoC | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 PCIe | wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
+| BM1684 SoC  | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
+| BM1684X PCIe| wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
+| BM1684X SoC | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
 | BM1684 PCIe | wenet.pcie| wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
 | BM1684 SoC  | wenet.soc | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
 | BM1684X PCIe| wenet.pcie| wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
@@ -174,7 +174,7 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 
 
 > **测试说明**：  
-1. 时间单位均为毫秒(ms)，统计的时间均为1秒音频处理的时间；
+1. 时间单位均为毫秒(ms)，统计的时间均为1秒音频处理的时间(本例程用到的测试音频总时长442.955s)；
 2. 性能测试结果具有一定的波动性，建议多次测试取平均值；
 3. BM1684/1684X SoC的主控CPU均为8核 ARM A53 42320 DMIPS @2.3GHz，PCIe上的性能由于CPU的不同可能存在较大差异；
 
