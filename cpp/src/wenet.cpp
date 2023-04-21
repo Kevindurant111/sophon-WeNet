@@ -144,9 +144,9 @@ int WeNet::inference() {
         encoder_inputs[3]->CopyFrom(chunk_xs_ptr);
         encoder_inputs[4]->CopyFrom(cache_mask);
         encoder_inputs[5]->CopyFrom(offset);
-        LOG_TS(m_ts, "wenet inference");
+        LOG_TS(m_ts, "wenet encoder inference");
         auto status = encoder_net->Forward();
-        LOG_TS(m_ts, "wenet inference");
+        LOG_TS(m_ts, "wenet encoder inference");
         assert(BM_SUCCESS == status);
     
         encoder_outputs[0]->CopyTo(log_probs);
@@ -243,9 +243,9 @@ int WeNet::inference() {
         decoder_inputs[3]->CopyFrom(hyps_lens_sos_ptr);
         decoder_inputs[4]->CopyFrom(r_hyps_pad_sos_eos_ptr);
         decoder_inputs[5]->CopyFrom(ctc_score_ptr);
-        LOG_TS(m_ts, "wenet inference");
+        LOG_TS(m_ts, "wenet decoder inference");
         auto status = decoder_net->Forward();
-        LOG_TS(m_ts, "wenet inference");
+        LOG_TS(m_ts, "wenet decoder inference");
         assert(BM_SUCCESS == status);
 
         void* best_idx = calloc(decoder_outputs[0]->num_elements(), sizeof(int));
