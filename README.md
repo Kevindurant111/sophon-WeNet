@@ -160,10 +160,10 @@ bmrt_test --bmodel models/BM1684/wenet_encoder_fp32.bmodel
 | BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 47.12 | none  | 8.56  |
 | BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0002 | 27.61 | none  | 3.25  |
 | BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel                             | 0.0014 | 27.42 | none  | 8.72  |
-| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684 PCIe | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 0.0002 | 44.45 | 156.43| 1.19  |
 | BM1684 SoC  | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
 | BM1684X PCIe| wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
-| BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | xxxx   | xxxx  | xxxx  | xxxx  |
+| BM1684X SoC | wenet.py  | wenet_encoder_fp32.bmodel + wenet_decoder_fp32.bmodel | 0.0015 | 46.95 | 155.05| 10.67 |
 | BM1684 PCIe | wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
 | BM1684 SoC  | wenet.soc | wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
 | BM1684X PCIe| wenet.pcie| wenet_encoder_fp32.bmodel                             | xxxx   | xxxx  | none  | xxxx  |
