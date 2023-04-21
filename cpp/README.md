@@ -13,6 +13,7 @@
     * [3.1 开启加速固件](#31-开启加速固件)
     * [3.2 参数说明](#32-参数说明)
     * [3.3 测试音频](#33-测试音频)
+* [4. FAQ](#4-FAQ)
 
 cpp目录下提供了C++例程以供参考使用，具体情况如下：
 | 序号  | C++例程      | 说明                                 |
@@ -119,6 +120,8 @@ Usage: wenet.pcie [params]
 ```bash
 ./wenet.pcie --encoder_bmodel=../models/BM1684/wenet_encoder_fp32.bmodel --decoder_bmodel=../models/BM1684/wenet_decoder_fp32.bmodel --dict_file=../config/lang_char.txt --config_file=../config/train_u2++_conformer.yaml --result_file=./result.txt --input=../datasets/aishell_S0764/aishell_S0764.list --mode=attention_rescoring --dev_id=0
 ```
-测试结束后，会将预测的结果文本保存在`result.txt`下，同时会打印预测结果、推理时间等信息。
+测试结束后，会将预测的结果文本保存在`result.txt`下，同时会打印预测结果、推理时间等信息。  
 
+## 4.FAQ
+- 1684x上暂不支持bm_fft，使用1684x设备请将src/processor.cpp中的“#define USE_BMCV_FFT 1”修改为“#define USE_BMCV_FFT 0”。
 
