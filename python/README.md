@@ -53,7 +53,7 @@ test_update_fw ./firmware/bm1684_tcm_icache.bin_v3.1.3-64586553-230125 ./firmwar
 ```bash
 usage: wenet.py [--input INPUT_PATH] [--encoder_bmodel ENCODER_BMODEL] [--decoder_bmodel DECODER_BMODEL][--dev_id DEV_ID] [--result_file RESULT_FILE_PATH] [--mode MODE]
 
---input: 测试数据路径，可输入整个图片文件夹的路径或者视频路径；
+--input: 测试数据路径，必须是符合格式要求的数据列表；
 --encoder_bmodel: 用于推理的encoder bmodel路径，默认使用stage 0的网络进行推理；
 --decoder_bmodel: 用于推理的decoder bmodel路径，默认使用stage 0的网络进行推理；
 --dev_id: 用于推理的tpu设备id；
@@ -61,7 +61,7 @@ usage: wenet.py [--input INPUT_PATH] [--encoder_bmodel ENCODER_BMODEL] [--decode
 --mode: 对整句进行解码采用的方式。
 ```
 ### 2.3 测试音频
-图片测试实例如下，支持对整个图片文件夹进行测试，BM1684X支持FP32和BM1684均支持单batch size的FP32 BModel，通过传入相应的模型路径参数进行测试即可。
+音频测试实例如下，BM1684X支持FP32和BM1684均支持单batch size的FP32 BModel，通过传入相应的模型路径参数进行测试即可。
 ```bash
 python3 wenet.py --input ../datasets/aishell_S0764/aishell_S0764.list --encoder_bmodel ../models/BM1684/wenet_encoder_fp32.bmodel --dev_id 0 --result_file ./result.txt --mode ctc_prefix_beam_search
 ```
