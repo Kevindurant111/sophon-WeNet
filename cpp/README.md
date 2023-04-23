@@ -60,10 +60,9 @@ cd ..
 交叉编译环境搭建好后，使用交叉编译工具链编译生成可执行文件：
 
 ```bash
-cd cpp/yolov5_bmcv
+cd cpp/
 mkdir build && cd build
-#请根据实际情况修改-DSDK的路径，需使用绝对路径。
-cmake -DTARGET_ARCH=soc -DSDK=/path_to_sdk/soc-sdk ..  
+cmake -DTARGET_ARCH=soc ..  
 make
 ```
 编译完成后，会在cpp目录下生成wenet.soc。
