@@ -25,7 +25,7 @@ cpp目录下提供了C++例程以供参考使用，具体情况如下：
 如果您在x86/arm平台安装了PCIe加速卡（如SC系列加速卡），可以直接使用它作为开发环境和运行环境。您需要安装libsophon、sophon-opencv和sophon-ffmpeg，具体步骤可参考[x86-pcie平台的开发和运行环境搭建](../../../docs/Environment_Install_Guide.md#3-x86-pcie平台的开发和运行环境搭建)或[arm-pcie平台的开发和运行环境搭建](../../../docs/Environment_Install_Guide.md#5-arm-pcie平台的开发和运行环境搭建)。  
 
 ### 1.2 SoC平台
-如果您使用SoC平台（如SE、SM系列边缘设备），刷机后在`/opt/sophon/`下已经预装了相应的libsophon、sophon-opencv和sophon-ffmpeg运行库包，可直接使用它作为运行环境。通常还需要一台x86主机作为开发环境，用于交叉编译C++程序。
+如果您使用SoC平台（如SE、SM系列边缘设备），刷机后在`/opt/sophon/`下已经预装了相应的libsophon、sophon-opencv和sophon-ffmpeg运行库包，可直接使用它作为运行环境。
 
 ### 1.3 第三方库依赖
 此外，在x86/arm PCIe/soc上都需要依赖以下的第三方库：
@@ -55,9 +55,7 @@ cd ..
 编译完成后，会在cpp目录下生成wenet.pcie。
 
 ### 2.2 SoC平台
-通常在x86主机上交叉编译程序，您需要在x86主机上使用SOPHON SDK搭建交叉编译环境，将程序所依赖的头文件和库文件打包至soc-sdk目录中，具体请参考[交叉编译环境搭建](../../../docs/Environment_Install_Guide.md#41-交叉编译环境搭建)。本例程主要依赖libsophon、sophon-opencv和sophon-ffmpeg运行库包。
-
-交叉编译环境搭建好后，使用交叉编译工具链编译生成可执行文件：
+ctcdecode-cpp下载并编译完成后，可以直接在SoC平台上编译程序。本例程主要依赖libsophon、sophon-opencv和sophon-ffmpeg运行库包：
 
 ```bash
 cd cpp/
@@ -68,7 +66,7 @@ make
 编译完成后，会在cpp目录下生成wenet.soc。
 
 ## 3. 推理测试
-对于PCIe平台，可以直接在PCIe平台上推理测试；对于SoC平台，需将交叉编译生成的可执行文件及所需的模型、测试数据拷贝到SoC平台中测试。测试的参数及运行方式是一致的，下面主要以PCIe模式进行介绍。
+PCIe平台和SoC平台上的测试参数及运行方式是一致的，下面主要以PCIe模式进行介绍。
 
 ### 3.1 开启加速固件
 在BM1684上运行测试时需要先开启加速固件, 否则模型可正常推理但是推理速度变慢; 在BM1684X上不需要这一步骤。
@@ -123,5 +121,6 @@ Usage: wenet.pcie [params]
 测试结束后，会将预测的结果文本保存在`result.txt`下，同时会打印预测结果、推理时间等信息。  
 
 ## 4. FAQ
-- 1684x上暂不支持bm_fft，使用1684x设备请将src/processor.cpp中的“#define USE_BMCV_FFT 1”修改为“#define USE_BMCV_FFT 0”。
+- 1684x上暂不支持bm_fft，使用1684x设备请将src/processor.cpp中的“#define USE_BMCV_FFT 1”修改为“#define USE_BMCV_FFT 0”。  
+- 由于外部依赖库较多，本例程没有提供针对SoC平台的交叉编译方法。
 
